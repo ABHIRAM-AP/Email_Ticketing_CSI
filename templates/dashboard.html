@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Event Ticketing System</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🎫 Event Ticketing System</h1>
+            <p>Admin Dashboard - Phase 2</p>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="showTab('csv-upload')">CSV Upload</button>
+            <button class="tab-btn" onclick="showTab('checkin')">Check-in</button>
+            <button class="tab-btn" onclick="showTab('stats')">Statistics</button>
+        </nav>
+
+        <!-- CSV Upload Tab -->
+        <div id="csv-upload" class="tab-content active">
+            <div class="card">
+                <h2>📋 Upload Hackathon Participants</h2>
+                <p>Upload a CSV file with hackathon participant emails. They'll get free entry to hackathon-day events.
+                </p>
+
+                <div class="upload-section">
+                    <div class="csv-format-info">
+                        <h3>Expected CSV Format:</h3>
+                        <pre>name,email,college,phone
+John Doe,john@example.com,MIT,+919876543210
+Jane Smith,jane@example.com,Stanford,+919876543211</pre>
+                        <p><strong>Minimum required:</strong> email column</p>
+                    </div>
+
+                    <form id="csv-upload-form">
+                        <input type="file" id="csv-file" accept=".csv" required>
+                        <button type="submit" class="btn-primary">Upload CSV</button>
+                    </form>
+
+                    <div id="upload-result" class="result-box" style="display:none;"></div>
+                </div>
+
+                <div class="participants-section">
+                    <h3>Imported Participants</h3>
+                    <div id="participants-stats"></div>
+                    <button onclick="loadParticipants()" class="btn-secondary">View All Participants</button>
+                    <div id="participants-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-in Tab -->
+        <div id="checkin" class="tab-content">
+            <div class="card">
+                <h2>✅ Event Check-in</h2>
+
+                <!-- Event Selection -->
+                <div class="event-selection">
+                    <label for="event-select">Select Event:</label>
+                    <select id="event-select" onchange="loadEventStats()">
+                        <option value="">Loading events...</option>
+                    </select>
+                </div>
+
+                <!-- Stats Display -->
+                <div id="event-stats" class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">-</div>
+                        <div class="stat-label">Total Registrations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">-</div>
+                        <div class="stat-label">Checked In</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">-</div>
+                        <div class="stat-label">CSV Check-ins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">-</div>
+                        <div class="stat-label">Remaining Capacity</div>
+                    </div>
+                </div>
+
+                <!-- Check-in Methods -->
+                <div class="checkin-methods">
+                    <div class="method-card">
+                        <h3>🔍 QR Code Scanner</h3>
+                        <p>Scan ticket QR codes for registered participants</p>
+                        <a href="/static/scanner.html" target="_blank" class="btn-primary">Open Scanner</a>
+                    </div>
+
+                    <div class="method-card">
+                        <h3>📧 Email Lookup</h3>
+                        <p>Check-in hackathon participants by email</p>
+                        <form id="email-checkin-form" onsubmit="checkInByEmail(event)">
+                            <input type="email" id="checkin-email" placeholder="participant@example.com" required>
+                            <button type="submit" class="btn-primary">Check-in</button>
+                        </form>
+                        <div id="email-checkin-result"></div>
+                    </div>
+                </div>
+
+                <!-- Recent Check-ins -->
+                <div class="recent-checkins">
+                    <h3>Recent Check-ins</h3>
+                    <button onclick="loadRecentCheckins()" class="btn-secondary">Refresh</button>
+                    <div id="recent-checkins-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="stats" class="tab-content">
+            <div class="card">
+                <h2>📊 Overall Statistics</h2>
+                <div id="overall-stats"></div>
+                <button onclick="loadOverallStats()" class="btn-primary">Refresh Statistics</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+
+</html>

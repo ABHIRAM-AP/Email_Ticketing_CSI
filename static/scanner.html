@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner - Check-in</title>
+    <link rel="stylesheet" href="/static/css/scanner.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+
+<body>
+    <div class="scanner-container">
+        <header>
+            <h1>📱 QR Code Scanner</h1>
+            <p>Point camera at ticket QR code</p>
+        </header>
+
+        <!-- Event Selection -->
+        <div class="event-selection">
+            <label for="scanner-event-select">Select Event:</label>
+            <select id="scanner-event-select">
+                <option value="">Loading events...</option>
+            </select>
+        </div>
+
+        <!-- Scanner -->
+        <div id="scanner-section">
+            <div id="qr-reader"></div>
+            <button id="start-scanner-btn" class="btn-primary" onclick="startScanner()">Start Scanner</button>
+            <button id="stop-scanner-btn" class="btn-secondary" onclick="stopScanner()" style="display:none;">Stop
+                Scanner</button>
+        </div>
+
+        <!-- Result Display -->
+        <div id="scan-result" class="result-display"></div>
+
+        <!-- Recent Scans -->
+        <div class="recent-scans">
+            <h3>Recent Scans</h3>
+            <div id="recent-scans-list"></div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h3>📖 Instructions</h3>
+            <ol>
+                <li>Select the event you're checking in for</li>
+                <li>Click "Start Scanner" to activate camera</li>
+                <li>Allow camera access when prompted</li>
+                <li>Point camera at the QR code on the ticket</li>
+                <li>System will automatically check-in when code is detected</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="/static/js/scanner.js"></script>
+</body>
+
+</html>
