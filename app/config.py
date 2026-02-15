@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     supabase_key: str
     
     # Email
-    email_host: str = "smtp.sendgrid.net"
+    email_host: str = "smtp.gmail.com"
     email_port: int = 587
     email_username: str
     email_password: str
