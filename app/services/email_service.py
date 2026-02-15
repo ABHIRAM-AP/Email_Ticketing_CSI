@@ -1,9 +1,7 @@
-import aiosmtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
-import base64
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 from app.config import settings
+import base64
 
 
 async def send_ticket_email(
@@ -15,20 +13,14 @@ async def send_ticket_email(
     qr_code_base64: str
 ) -> bool:
     """
-    Send ticket email with QR code as attachment
+    Send ticket email with QR code using SendGrid HTTP API
     """
     
     try:
-        print(f"📧 Preparing email for {recipient_email}...")
+        print(f"📧 Preparing email for {recipient_email} via SendGrid API...")
         
-        # Create message
-        msg = MIMEMultipart('mixed')
-        msg['Subject'] = f"🎫 Your Ticket for {event_name}"
-        msg['From'] = settings.email_from
-        msg['To'] = recipient_email
-        
-        # HTML body
-        html = f"""
+        # HTML content
+        html_content = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -78,9 +70,6 @@ async def send_ticket_email(
             border-radius: 8px;
             padding: 15px;
             margin: 20px 0;
-        }}
-        .alert strong {{
-            color: #856404;
         }}
     </style>
 </head>
@@ -135,54 +124,39 @@ async def send_ticket_email(
 </html>
         """
         
-        print("✅ HTML body created")
-        
-        # Attach HTML body
-        html_part = MIMEText(html, 'html', 'utf-8')
-        msg.attach(html_part)
-        
-        print("✅ HTML attached")
-        
-        # Process QR code
-        print(f"📊 QR code length: {len(qr_code_base64)}")
-        print(f"📊 QR code starts with: {qr_code_base64[:50]}")
-        
-        if 'base64,' in qr_code_base64:
-            qr_data = qr_code_base64.split('base64,')[1]
-            print("✅ Removed data URL prefix")
-        else:
-            qr_data = qr_code_base64
-            print("ℹ️  No prefix found, using as-is")
-        
-        # Decode to bytes
-        try:
-            qr_bytes = base64.b64decode(qr_data)
-            print(f"✅ QR decoded successfully ({len(qr_bytes)} bytes)")
-        except Exception as decode_error:
-            print(f"❌ Base64 decode error: {decode_error}")
-            raise
-        
-        # Attach as PNG file
-        qr_attachment = MIMEApplication(qr_bytes, _subtype='png')
-        qr_attachment.add_header('Content-Disposition', 'attachment', filename='ticket_qr_code.png')
-        msg.attach(qr_attachment)
-        
-        print("✅ QR attachment added")
-        
-        # Send email
-        print(f"📤 Sending email to {recipient_email}...")
-        
-        await aiosmtplib.send(
-            msg,
-            hostname=settings.email_host,
-            port=settings.email_port,
-            username=settings.email_username,
-            password=settings.email_password,
-            start_tls=True,
-            timeout=10
+        # Create message
+        message = Mail(
+            from_email=settings.email_from,
+            to_emails=recipient_email,
+            subject=f"🎫 Your Ticket for {event_name}",
+            html_content=html_content
         )
         
-        print(f"✅ Email with QR attachment sent successfully to {recipient_email}")
+        # Process QR code
+        if 'base64,' in qr_code_base64:
+            qr_data = qr_code_base64.split('base64,')[1]
+        else:
+            qr_data = qr_code_base64
+        
+        # Create attachment
+        attachment = Attachment(
+            FileContent(qr_data),
+            FileName('ticket_qr_code.png'),
+            FileType('image/png'),
+            Disposition('attachment')
+        )
+        message.attachment = attachment
+        
+        print("✅ Message and attachment prepared")
+        
+        # Send via SendGrid HTTP API
+        # API key is in EMAIL_PASSWORD environment variable
+        sg = SendGridAPIClient(settings.email_password)
+        response = sg.send(message)
+        
+        print(f"✅ Email sent successfully! Status: {response.status_code}")
+        print(f"✅ Response body: {response.body}")
+        
         return True
         
     except Exception as e:

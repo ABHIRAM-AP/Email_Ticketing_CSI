@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -8,10 +8,10 @@ class Settings(BaseSettings):
     supabase_key: str
     
     # Email
-    email_host: str = "smtp.gmail.com"
-    email_port: int = 587
-    email_username: str
-    email_password: str
+    email_host: Optional[str] = "smtp.gmail.com"
+    email_port: Optional[int] = 587
+    email_username: Optional[str] = None
+    email_password: str  # This is the SendGrid API key
     email_from: str
     
     # App
