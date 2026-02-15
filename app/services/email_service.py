@@ -1,11 +1,9 @@
 import aiosmtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
-from jinja2 import Template
+from email.mime.application import MIMEApplication
 import base64
 from app.config import settings
-from typing import Optional
 
 
 async def send_ticket_email(
@@ -17,131 +15,178 @@ async def send_ticket_email(
     qr_code_base64: str
 ) -> bool:
     """
-    Send ticket email with QR code
-    
-    Args:
-        recipient_email: Recipient's email
-        recipient_name: Recipient's name
-        event_name: Name of the event
-        event_date: Event date string
-        ticket_id: Unique ticket ID
-        qr_code_base64: Base64 encoded QR code image
-    
-    Returns:
-        True if email sent successfully, False otherwise
-    """
-    
-    # Email HTML template
-    html_template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                      color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .ticket-box { background: white; padding: 20px; margin: 20px 0; 
-                         border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            .qr-code { text-align: center; margin: 20px 0; }
-            .qr-code img { max-width: 250px; border: 2px solid #667eea; padding: 10px; 
-                          background: white; border-radius: 8px; }
-            .info-row { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 4px; }
-            .label { font-weight: bold; color: #667eea; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>🎉 Your Event Ticket</h1>
-            </div>
-            <div class="content">
-                <h2>Hello {{ name }}!</h2>
-                <p>Your registration for <strong>{{ event_name }}</strong> is confirmed!</p>
-                
-                <div class="ticket-box">
-                    <div class="info-row">
-                        <span class="label">Event:</span> {{ event_name }}
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Date:</span> {{ event_date }}
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Ticket ID:</span> {{ ticket_id }}
-                    </div>
-                    
-                    <div class="qr-code">
-                        <p><strong>Your QR Code Ticket</strong></p>
-                        <img src="cid:qrcode" alt="QR Code">
-                        <p style="font-size: 12px; color: #666;">
-                            Please show this QR code at the event entrance
-                        </p>
-                    </div>
-                </div>
-                
-                <p><strong>Important:</strong></p>
-                <ul>
-                    <li>Keep this email safe - you'll need it for check-in</li>
-                    <li>Screenshot the QR code for quick access</li>
-                    <li>Arrive 15 minutes before the event starts</li>
-                </ul>
-                
-                <p>See you at the event! 🚀</p>
-                
-                <div class="footer">
-                    <p>{{ app_name }}<br>
-                    If you have any questions, please contact the event organizers.</p>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
+    Send ticket email with QR code as attachment
     """
     
     try:
-        # Render template
-        template = Template(html_template)
-        html_content = template.render(
-            name=recipient_name,
-            event_name=event_name,
-            event_date=event_date,
-            ticket_id=ticket_id,
-            app_name=settings.app_name
-        )
+        print(f"📧 Preparing email for {recipient_email}...")
         
         # Create message
-        message = MIMEMultipart('related')
-        message['Subject'] = f"Your Ticket for {event_name}"
-        message['From'] = settings.email_from
-        message['To'] = recipient_email
+        msg = MIMEMultipart('mixed')
+        msg['Subject'] = f"🎫 Your Ticket for {event_name}"
+        msg['From'] = settings.email_from
+        msg['To'] = recipient_email
         
-        # Attach HTML content
-        html_part = MIMEText(html_content, 'html')
-        message.attach(html_part)
+        # HTML body
+        html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }}
+        .content {{
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }}
+        .ticket-box {{
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .info-row {{
+            padding: 10px;
+            margin: 8px 0;
+            background: #f0f0f0;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+        }}
+        .label {{
+            font-weight: bold;
+            color: #667eea;
+        }}
+        .alert {{
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }}
+        .alert strong {{
+            color: #856404;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Your Event Ticket</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Hello {recipient_name}!</h2>
+        <p>Your registration for <strong>{event_name}</strong> is confirmed!</p>
         
-        # Attach QR code image
-        # Remove data:image/png;base64, prefix if present
-        qr_data = qr_code_base64.split(',')[1] if ',' in qr_code_base64 else qr_code_base64
-        qr_image_data = base64.b64decode(qr_data)
+        <div class="ticket-box">
+            <div class="info-row">
+                <span class="label">Event:</span> {event_name}
+            </div>
+            <div class="info-row">
+                <span class="label">Date:</span> {event_date}
+            </div>
+            <div class="info-row">
+                <span class="label">Ticket ID:</span> {ticket_id}
+            </div>
+        </div>
         
-        qr_image = MIMEImage(qr_image_data)
-        qr_image.add_header('Content-ID', '<qrcode>')
-        message.attach(qr_image)
+        <div class="alert">
+            <strong>📎 QR Code Attached!</strong>
+            <p>Your ticket QR code is attached to this email as <strong>"ticket_qr_code.png"</strong></p>
+            <ul>
+                <li>Download the attachment</li>
+                <li>Save it on your phone</li>
+                <li>Show it at the event entrance</li>
+            </ul>
+        </div>
+        
+        <p><strong>Important:</strong></p>
+        <ul>
+            <li>Keep this email and attachment safe</li>
+            <li>Arrive 15 minutes before the event</li>
+            <li>Bring valid ID for verification</li>
+        </ul>
+        
+        <p style="text-align: center; font-size: 18px; margin-top: 30px;">
+            See you at the event! 🚀
+        </p>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+            <p>{settings.app_name}</p>
+            <p>Contact event organizers if you have questions</p>
+        </div>
+    </div>
+</body>
+</html>
+        """
+        
+        print("✅ HTML body created")
+        
+        # Attach HTML body
+        html_part = MIMEText(html, 'html', 'utf-8')
+        msg.attach(html_part)
+        
+        print("✅ HTML attached")
+        
+        # Process QR code
+        print(f"📊 QR code length: {len(qr_code_base64)}")
+        print(f"📊 QR code starts with: {qr_code_base64[:50]}")
+        
+        if 'base64,' in qr_code_base64:
+            qr_data = qr_code_base64.split('base64,')[1]
+            print("✅ Removed data URL prefix")
+        else:
+            qr_data = qr_code_base64
+            print("ℹ️  No prefix found, using as-is")
+        
+        # Decode to bytes
+        try:
+            qr_bytes = base64.b64decode(qr_data)
+            print(f"✅ QR decoded successfully ({len(qr_bytes)} bytes)")
+        except Exception as decode_error:
+            print(f"❌ Base64 decode error: {decode_error}")
+            raise
+        
+        # Attach as PNG file
+        qr_attachment = MIMEApplication(qr_bytes, _subtype='png')
+        qr_attachment.add_header('Content-Disposition', 'attachment', filename='ticket_qr_code.png')
+        msg.attach(qr_attachment)
+        
+        print("✅ QR attachment added")
         
         # Send email
+        print(f"📤 Sending email to {recipient_email}...")
+        
         await aiosmtplib.send(
-            message,
+            msg,
             hostname=settings.email_host,
             port=settings.email_port,
             username=settings.email_username,
             password=settings.email_password,
-            start_tls=True
+            start_tls=True,
+            timeout=10
         )
         
+        print(f"✅ Email with QR attachment sent successfully to {recipient_email}")
         return True
         
     except Exception as e:
-        print(f"Error sending email: {str(e)}")
+        print(f"❌ Error sending email: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False

@@ -75,16 +75,18 @@ class RegistrationService:
         
         # 7. Send ticket email
         event_date_str = datetime.fromisoformat(event.data['event_date']).strftime('%B %d, %Y at %I:%M %p')
-        
-        email_sent = await send_ticket_email(
+        try:
+            email_sent = await send_ticket_email(
             recipient_email=registration.email,
             recipient_name=registration.name,
             event_name=event.data['name'],
             event_date=event_date_str,
             ticket_id=ticket_id,
             qr_code_base64=qr_code
-        )
-        
+    )
+        except Exception as email_error:
+            print(f"⚠️ Email failed but registration succeeded: {email_error}")
+            email_sent = False
         return {
             'registration_id': created_reg['id'],
             'ticket_id': ticket_id,

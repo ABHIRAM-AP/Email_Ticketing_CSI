@@ -65,6 +65,7 @@ tmp/
 Thumbs.db
 
 
-mail.py
 db_schema.sql
 Thumbs.db
+
+
