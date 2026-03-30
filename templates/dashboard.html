@@ -18,7 +18,6 @@
         <nav class="tab-nav">
             <button class="tab-btn active" onclick="showTab('csv-upload')">CSV Upload</button>
             <button class="tab-btn" onclick="showTab('checkin')">Check-in</button>
-            <button class="tab-btn" onclick="showTab('stats')">Statistics</button>
         </nav>
 
         <!-- CSV Upload Tab -->
@@ -57,15 +56,7 @@ Jane Smith,jane@example.com,Stanford,+919876543211</pre>
         <!-- Check-in Tab -->
         <div id="checkin" class="tab-content">
             <div class="card">
-                <h2>✅ Event Check-in</h2>
-
-                <!-- Event Selection -->
-                <div class="event-selection">
-                    <label for="event-select">Select Event:</label>
-                    <select id="event-select" onchange="loadEventStats()">
-                        <option value="">Loading events...</option>
-                    </select>
-                </div>
+                <h2>✅ Hackathon Check-in</h2>
 
                 <!-- Stats Display -->
                 <div id="event-stats" class="stats-grid">
@@ -115,14 +106,6 @@ Jane Smith,jane@example.com,Stanford,+919876543211</pre>
             </div>
         </div>
 
-        <!-- Statistics Tab -->
-        <div id="stats" class="tab-content">
-            <div class="card">
-                <h2>📊 Overall Statistics</h2>
-                <div id="overall-stats"></div>
-                <button onclick="loadOverallStats()" class="btn-primary">Refresh Statistics</button>
-            </div>
-        </div>
     </div>
 
     <script src="/static/js/dashboard.js"></script>

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS events (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     description TEXT,
-    event_type VARCHAR(50) NOT NULL CHECK (event_type IN ('pre_event', 'hackathon_day')),
+    event_type VARCHAR(50) NOT NULL CHECK (event_type IN ('hackathon_day')),
     event_date TIMESTAMPTZ NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
     registration_open BOOLEAN DEFAULT TRUE,
@@ -126,11 +126,13 @@ CREATE TRIGGER update_registrations_updated_at
 -- SAMPLE DATA (Optional - for testing)
 -- ================================================
 
--- Insert sample event
-INSERT INTO events (name, description, event_type, event_date, capacity, registration_open)
+-- Insert default Hackathon event (ID 1)
+INSERT INTO events (id, name, description, event_type, event_date, capacity, registration_open)
 VALUES 
-    ('AI Workshop', 'Learn about AI and Machine Learning basics', 'pre_event', NOW() + INTERVAL '7 days', 100, TRUE),
-    ('Coding Competition', 'Test your coding skills', 'hackathon_day', NOW() + INTERVAL '14 days', 150, TRUE);
+    (1, 'Hackathon 2026', 'The main hackathon event', 'hackathon_day', NOW() + INTERVAL '14 days', 500, TRUE)
+ON CONFLICT (id) DO UPDATE SET 
+    name = EXCLUDED.name,
+    description = EXCLUDED.description;
 
 -- ================================================
 -- USEFUL QUERIES FOR REFERENCE

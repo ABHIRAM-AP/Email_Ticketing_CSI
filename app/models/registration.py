@@ -4,7 +4,6 @@ from datetime import datetime
 
 
 class RegistrationCreate(BaseModel):
-    event_id: int
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
     phone: str = Field(..., pattern=r"^\+?[1-9]\d{9,14}$")
@@ -13,7 +12,6 @@ class RegistrationCreate(BaseModel):
 
 class RegistrationResponse(BaseModel):
     id: int
-    event_id: int
     name: str
     email: str
     phone: str

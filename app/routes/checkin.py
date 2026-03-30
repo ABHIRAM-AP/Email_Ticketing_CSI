@@ -6,18 +6,17 @@ router = APIRouter(prefix="/checkin", tags=["Check-in"])
 
 
 @router.post("/qr", response_model=dict)
-async def checkin_by_qr(ticket_id: str, event_id: int):
+async def checkin_by_qr(ticket_id: str):
     """
     Check-in participant using QR code (ticket ID)
     
     Args:
         ticket_id: The ticket ID from QR code
-        event_id: The event ID for this check-in
     """
     service = CheckInService()
     
     try:
-        result = service.check_in_by_qr(ticket_id, event_id)
+        result = service.check_in_by_qr(ticket_id)
         
         if not result['success']:
             raise HTTPException(
@@ -37,18 +36,17 @@ async def checkin_by_qr(ticket_id: str, event_id: int):
 
 
 @router.post("/email", response_model=dict)
-async def checkin_by_email(email: str, event_id: int):
+async def checkin_by_email(email: str):
     """
     Check-in participant using email lookup (for hackathon participants)
     
     Args:
         email: Participant's email
-        event_id: The event ID for this check-in
     """
     service = CheckInService()
     
     try:
-        result = service.check_in_by_email(email, event_id)
+        result = service.check_in_by_email(email)
         
         if not result['success']:
             raise HTTPException(
@@ -67,10 +65,10 @@ async def checkin_by_email(email: str, event_id: int):
         )
 
 
-@router.get("/stats/{event_id}", response_model=dict)
-async def get_checkin_stats(event_id: int):
+@router.get("/stats", response_model=dict)
+async def get_checkin_stats():
     """
-    Get check-in statistics for an event
+    Get check-in statistics for the hackathon
     
     Returns:
         - Total registrations
@@ -81,25 +79,24 @@ async def get_checkin_stats(event_id: int):
     service = CheckInService()
     
     try:
-        stats = service.get_event_checkin_stats(event_id)
+        stats = service.get_event_checkin_stats()
         return stats
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/recent/{event_id}", response_model=list)
-async def get_recent_checkins(event_id: int, limit: int = Query(default=10, le=50)):
+@router.get("/recent", response_model=list)
+async def get_recent_checkins(limit: int = Query(default=10, le=50)):
     """
-    Get recent check-ins for an event
+    Get recent check-ins for the hackathon
     
     Args:
-        event_id: Event ID
         limit: Maximum number of check-ins to return (default 10, max 50)
     """
     service = CheckInService()
     
     try:
-        checkins = service.get_recent_checkins(event_id, limit)
+        checkins = service.get_recent_checkins(limit)
         return checkins
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

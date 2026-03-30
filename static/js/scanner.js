@@ -3,42 +3,10 @@ const API_BASE = window.location.origin;
 
 // Scanner instance
 let html5QrCode = null;
-let currentEventId = null;
 let recentScans = [];
-
-// Load Events
-async function loadEvents() {
-    try {
-        const response = await fetch(`${API_BASE}/events/`);
-        const events = await response.json();
-
-        const select = document.getElementById('scanner-event-select');
-        select.innerHTML = '<option value="">Select an event...</option>' +
-            events.map(e => `
-                <option value="${e.id}">${e.name} - ${new Date(e.event_date).toLocaleDateString()}</option>
-            `).join('');
-
-        select.addEventListener('change', () => {
-            currentEventId = parseInt(select.value);
-        });
-
-        // Auto-select first event
-        if (events.length > 0) {
-            select.value = events[0].id;
-            currentEventId = events[0].id;
-        }
-    } catch (error) {
-        console.error('Error loading events:', error);
-    }
-}
 
 // Start Scanner
 async function startScanner() {
-    if (!currentEventId) {
-        alert('Please select an event first!');
-        return;
-    }
-
     try {
         html5QrCode = new Html5Qrcode("qr-reader");
 
@@ -88,7 +56,7 @@ async function onScanSuccess(decodedText, decodedResult) {
 
     // Check-in via API
     try {
-        const response = await fetch(`${API_BASE}/checkin/qr?ticket_id=${encodeURIComponent(ticketId)}&event_id=${currentEventId}`, {
+        const response = await fetch(`${API_BASE}/checkin/qr?ticket_id=${encodeURIComponent(ticketId)}`, {
             method: 'POST'
         });
 
@@ -162,7 +130,7 @@ function showResult(result, type) {
         `;
         resultDiv.className = 'result-display success show';
 
-        // Play success sound (optional)
+        // Play success sound
         playSound('success');
 
     } else {
@@ -173,7 +141,7 @@ function showResult(result, type) {
         `;
         resultDiv.className = 'result-display error show';
 
-        // Play error sound (optional)
+        // Play error sound
         playSound('error');
     }
 
@@ -224,20 +192,21 @@ function updateRecentScansList() {
     listDiv.innerHTML = html;
 }
 
-// Play Sound (optional - implement if needed)
+// Play Sound
 function playSound(type) {
-    // You can add audio elements and play them here
-    // For now, using browser beep
-    if (type === 'success') {
-        // Success sound
-    } else {
-        // Error sound
-    }
+    // Placeholder for future sound implementation
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-    loadEvents();
+    // No events to load anymore, single hackathon context is implicit
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (html5QrCode) {
+        html5QrCode.stop();
+    }
 });
 
 // Cleanup on page unload

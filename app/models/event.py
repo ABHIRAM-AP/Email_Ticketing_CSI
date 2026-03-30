@@ -5,7 +5,6 @@ from enum import Enum
 
 
 class EventType(str, Enum):
-    PRE_EVENT = "pre_event"
     HACKATHON_DAY = "hackathon_day"
 
 

@@ -23,7 +23,6 @@ class HackathonParticipantResponse(BaseModel):
 
 
 class CheckInCreate(BaseModel):
-    event_id: int
     email: str
     ticket_id: Optional[str] = None
     source: str  # 'qr', 'csv', 'manual'
@@ -31,7 +30,6 @@ class CheckInCreate(BaseModel):
 
 class CheckInResponse(BaseModel):
     id: int
-    event_id: int
     email: str
     ticket_id: Optional[str]
     source: str

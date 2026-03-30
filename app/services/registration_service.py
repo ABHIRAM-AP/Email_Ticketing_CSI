@@ -17,9 +17,11 @@ class RegistrationService:
         Returns:
             Dict with registration details and ticket info
         """
+        # Fixed Event ID for the Hackathon
+        HACKATHON_EVENT_ID = 1
         
         # 1. Check if event exists and is open for registration
-        event = self.db.table('events').select('*').eq('id', registration.event_id).single().execute()
+        event = self.db.table('events').select('*').eq('id', HACKATHON_EVENT_ID).single().execute()
         
         if not event.data:
             raise ValueError("Event not found")
@@ -30,25 +32,25 @@ class RegistrationService:
         # 2. Check capacity
         current_count = self.db.table('registrations')\
             .select('id', count='exact')\
-            .eq('event_id', registration.event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .execute()
         
         if current_count.count >= event.data['capacity']:
             raise ValueError("Event is full")
         
-        # 3. Check for duplicate registration (same email for same event)
+        # 3. Check for duplicate registration (same email for the Hackathon)
         existing = self.db.table('registrations')\
             .select('id')\
-            .eq('event_id', registration.event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .eq('email', registration.email)\
             .execute()
         
         if existing.data:
             raise ValueError("You have already registered for this event")
         
-        # 4. Create registration record (without ticket_id first)
+        # 4. Create registration record
         reg_data = {
-            'event_id': registration.event_id,
+            'event_id': HACKATHON_EVENT_ID,
             'name': registration.name,
             'email': registration.email,
             'phone': registration.phone,
@@ -64,7 +66,7 @@ class RegistrationService:
         created_reg = result.data[0]
         
         # 5. Generate ticket ID and QR code
-        ticket_id = generate_ticket_id(registration.event_id, created_reg['id'])
+        ticket_id = generate_ticket_id(HACKATHON_EVENT_ID, created_reg['id'])
         qr_code = generate_qr_code(ticket_id)
         
         # 6. Update registration with ticket info
@@ -73,20 +75,26 @@ class RegistrationService:
             .eq('id', created_reg['id'])\
             .execute()
         
-        # 7. Send ticket email
+        # 7. Send ticket email (Only for Hackathon Day events)
         event_date_str = datetime.fromisoformat(event.data['event_date']).strftime('%B %d, %Y at %I:%M %p')
-        try:
-            email_sent = await send_ticket_email(
-            recipient_email=registration.email,
-            recipient_name=registration.name,
-            event_name=event.data['name'],
-            event_date=event_date_str,
-            ticket_id=ticket_id,
-            qr_code_base64=qr_code
-    )
-        except Exception as email_error:
-            print(f"⚠️ Email failed but registration succeeded: {email_error}")
-            email_sent = False
+        email_sent = False
+        
+        if event.data.get('event_type') == 'hackathon_day':
+            try:
+                email_sent = await send_ticket_email(
+                    recipient_email=registration.email,
+                    recipient_name=registration.name,
+                    event_name=event.data['name'],
+                    event_date=event_date_str,
+                    ticket_id=ticket_id,
+                    qr_code_base64=qr_code
+                )
+            except Exception as email_error:
+                print(f"⚠️ Email failed but registration succeeded: {email_error}")
+                email_sent = False
+        else:
+            print(f"ℹ️ Skipping email for non-hackathon event: {event.data['event_type']}")
+            
         return {
             'registration_id': created_reg['id'],
             'ticket_id': ticket_id,

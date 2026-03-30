@@ -1,9 +1,6 @@
 // API Base URL
 const API_BASE = window.location.origin;
 
-// Current selected event
-let currentEventId = null;
-
 // Tab switching
 function showTab(tabName) {
     // Hide all tabs
@@ -24,9 +21,7 @@ function showTab(tabName) {
 
     // Load data for specific tabs
     if (tabName === 'checkin') {
-        loadEvents();
-    } else if (tabName === 'stats') {
-        loadOverallStats();
+        loadEventStats();
     } else if (tabName === 'csv-upload') {
         loadCSVStats();
     }
@@ -125,38 +120,10 @@ async function loadParticipants() {
     }
 }
 
-// Load Events for Check-in
-async function loadEvents() {
-    try {
-        const response = await fetch(`${API_BASE}/events/`);
-        const events = await response.json();
-
-        const select = document.getElementById('event-select');
-        select.innerHTML = '<option value="">Select an event...</option>' +
-            events.map(e => `
-                <option value="${e.id}">${e.name} - ${new Date(e.event_date).toLocaleDateString()}</option>
-            `).join('');
-
-        // Auto-select first event
-        if (events.length > 0) {
-            select.value = events[0].id;
-            currentEventId = events[0].id;
-            loadEventStats();
-        }
-    } catch (error) {
-        console.error('Error loading events:', error);
-    }
-}
-
-// Load Event Statistics
+// Load Event Statistics for the Hackathon
 async function loadEventStats() {
-    const select = document.getElementById('event-select');
-    currentEventId = parseInt(select.value);
-
-    if (!currentEventId) return;
-
     try {
-        const response = await fetch(`${API_BASE}/checkin/stats/${currentEventId}`);
+        const response = await fetch(`${API_BASE}/checkin/stats`);
         const stats = await response.json();
 
         // Update stat cards
@@ -180,15 +147,10 @@ async function checkInByEmail(e) {
     const email = document.getElementById('checkin-email').value;
     const resultDiv = document.getElementById('email-checkin-result');
 
-    if (!currentEventId) {
-        resultDiv.innerHTML = '<div class="result-box error">Please select an event first</div>';
-        return;
-    }
-
     try {
         resultDiv.innerHTML = '<div class="result-box info">Processing...</div>';
 
-        const response = await fetch(`${API_BASE}/checkin/email?email=${encodeURIComponent(email)}&event_id=${currentEventId}`, {
+        const response = await fetch(`${API_BASE}/checkin/email?email=${encodeURIComponent(email)}`, {
             method: 'POST'
         });
 
@@ -220,10 +182,8 @@ async function checkInByEmail(e) {
 
 // Load Recent Check-ins
 async function loadRecentCheckins() {
-    if (!currentEventId) return;
-
     try {
-        const response = await fetch(`${API_BASE}/checkin/recent/${currentEventId}?limit=10`);
+        const response = await fetch(`${API_BASE}/checkin/recent?limit=10`);
         const checkins = await response.json();
 
         const listHtml = checkins.map(c => {
@@ -244,53 +204,6 @@ async function loadRecentCheckins() {
         document.getElementById('recent-checkins-list').innerHTML = listHtml || '<p>No check-ins yet.</p>';
     } catch (error) {
         console.error('Error loading recent check-ins:', error);
-    }
-}
-
-// Load Overall Statistics
-async function loadOverallStats() {
-    try {
-        const [eventsRes, csvRes] = await Promise.all([
-            fetch(`${API_BASE}/events/`),
-            fetch(`${API_BASE}/csv/stats`)
-        ]);
-
-        const events = await eventsRes.json();
-        const csvStats = await csvRes.json();
-
-        // Get total registrations across all events
-        let totalRegistrations = 0;
-        let totalCheckedIn = 0;
-
-        for (const event of events) {
-            const statsRes = await fetch(`${API_BASE}/checkin/stats/${event.id}`);
-            const stats = await statsRes.json();
-            totalRegistrations += stats.total_registrations;
-            totalCheckedIn += stats.total_checkins;
-        }
-
-        document.getElementById('overall-stats').innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">${events.length}</div>
-                    <div class="stat-label">Total Events</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${totalRegistrations}</div>
-                    <div class="stat-label">Total Registrations</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${totalCheckedIn}</div>
-                    <div class="stat-label">Total Check-ins</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${csvStats.total_participants}</div>
-                    <div class="stat-label">Hackathon Participants</div>
-                </div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error loading overall stats:', error);
     }
 }
 

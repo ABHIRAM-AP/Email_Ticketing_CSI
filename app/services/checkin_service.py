@@ -9,13 +9,14 @@ class CheckInService:
         self.db = get_supabase()
         self.csv_service = CSVService()
     
-    def check_in_by_qr(self, ticket_id: str, event_id: int) -> Dict:
+    def check_in_by_qr(self, ticket_id: str) -> Dict:
         """
         Check-in using QR code (ticket ID)
         
         Returns:
             Dict with check-in result and participant info
         """
+        HACKATHON_EVENT_ID = 1
         # 1. Find registration by ticket ID
         registration = self.db.table('registrations')\
             .select('*, events(*)')\
@@ -33,10 +34,10 @@ class CheckInService:
         reg = registration.data
         
         # 2. Verify event matches
-        if reg['event_id'] != event_id:
+        if reg['event_id'] != HACKATHON_EVENT_ID:
             return {
                 'success': False,
-                'message': f"This ticket is for {reg['events']['name']}, not the current event",
+                'message': f"This ticket is for {reg['events']['name']}, not the Hackathon",
                 'reason': 'wrong_event'
             }
         
@@ -58,7 +59,7 @@ class CheckInService:
         
         # 5. Record in check_ins table
         check_in_data = {
-            'event_id': event_id,
+            'event_id': HACKATHON_EVENT_ID,
             'email': reg['email'],
             'ticket_id': ticket_id,
             'source': 'qr'
@@ -74,13 +75,14 @@ class CheckInService:
             'event_name': reg['events']['name']
         }
     
-    def check_in_by_email(self, email: str, event_id: int) -> Dict:
+    def check_in_by_email(self, email: str) -> Dict:
         """
         Check-in using email lookup (for hackathon participants)
         
         Returns:
             Dict with check-in result
         """
+        HACKATHON_EVENT_ID = 1
         email = email.strip().lower()
         
         # 1. Check if email exists in hackathon participants
@@ -91,7 +93,7 @@ class CheckInService:
             registration = self.db.table('registrations')\
                 .select('*, events(*)')\
                 .eq('email', email)\
-                .eq('event_id', event_id)\
+                .eq('event_id', HACKATHON_EVENT_ID)\
                 .execute()
             
             if not registration.data:
@@ -112,7 +114,7 @@ class CheckInService:
         existing_checkin = self.db.table('check_ins')\
             .select('*')\
             .eq('email', email)\
-            .eq('event_id', event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .execute()
         
         if existing_checkin.data:
@@ -128,7 +130,7 @@ class CheckInService:
         
         # 4. Record check-in
         check_in_data = {
-            'event_id': event_id,
+            'event_id': HACKATHON_EVENT_ID,
             'email': email,
             'ticket_id': None,
             'source': 'csv'
@@ -144,39 +146,40 @@ class CheckInService:
             'source': 'hackathon_csv'
         }
     
-    def get_event_checkin_stats(self, event_id: int) -> Dict:
-        """Get check-in statistics for an event"""
+    def get_event_checkin_stats(self) -> Dict:
+        """Get check-in statistics for the hackathon"""
+        HACKATHON_EVENT_ID = 1
         
         # Total registrations (with tickets)
         registrations = self.db.table('registrations')\
             .select('id', count='exact')\
-            .eq('event_id', event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .execute()
         
         # Checked in registrations
         checked_in_registrations = self.db.table('registrations')\
             .select('id', count='exact')\
-            .eq('event_id', event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .eq('checked_in', True)\
             .execute()
         
         # Check-ins from CSV (hackathon participants)
         csv_checkins = self.db.table('check_ins')\
             .select('id', count='exact')\
-            .eq('event_id', event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .eq('source', 'csv')\
             .execute()
         
         # All check-ins
         total_checkins = self.db.table('check_ins')\
             .select('id', count='exact')\
-            .eq('event_id', event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .execute()
         
         # Get event details
         event = self.db.table('events')\
             .select('*')\
-            .eq('id', event_id)\
+            .eq('id', HACKATHON_EVENT_ID)\
             .single()\
             .execute()
         
@@ -190,11 +193,12 @@ class CheckInService:
             'remaining_capacity': event.data['capacity'] - total_checkins.count
         }
     
-    def get_recent_checkins(self, event_id: int, limit: int = 10) -> list:
-        """Get recent check-ins for an event"""
+    def get_recent_checkins(self, limit: int = 10) -> list:
+        """Get recent check-ins for the hackathon"""
+        HACKATHON_EVENT_ID = 1
         checkins = self.db.table('check_ins')\
             .select('*')\
-            .eq('event_id', event_id)\
+            .eq('event_id', HACKATHON_EVENT_ID)\
             .order('checked_in_at', desc=True)\
             .limit(limit)\
             .execute()

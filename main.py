@@ -2,15 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
-from app.routes import events, registrations, csv_upload, checkin
+from app.routes import registrations, csv_upload, checkin
 from app.config import settings
 import os
 
 # Initialize FastAPI app
 app = FastAPI(
-    title=settings.app_name,
-    description="Event ticketing system with QR code generation and email delivery",
-    version="2.0.0 - Phase 2"
+    title="Hackathon Ticketing System",
+    description="Dedicated ticketing and check-in system for the hackathon",
+    version="2.0.0 - Phase 2 (Hackathon Only)"
 )
 
 # CORS middleware (adjust origins as needed)
@@ -26,7 +26,6 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
-app.include_router(events.router)
 app.include_router(registrations.router)
 app.include_router(csv_upload.router)
 app.include_router(checkin.router)
@@ -35,12 +34,11 @@ app.include_router(checkin.router)
 @app.get("/")
 async def root():
     return {
-        "message": "Event Ticketing System API - Phase 2",
+        "message": "Hackathon Ticketing System API",
         "version": "2.0.0",
         "status": "running",
         "features": [
-            "Event Management",
-            "Registration & Ticketing",
+            "Hackathon Registration & Ticketing",
             "CSV Import (Hackathon Participants)",
             "Check-in System (QR & Email)"
         ]

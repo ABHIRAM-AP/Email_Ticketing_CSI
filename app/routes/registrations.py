@@ -29,13 +29,14 @@ async def register_for_event(registration: RegistrationCreate):
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 
-@router.get("/event/{event_id}", response_model=List[dict])
-async def get_event_registrations(event_id: int):
-    """Get all registrations for a specific event"""
+@router.get("/", response_model=List[dict])
+async def get_all_registrations():
+    """Get all hackathon registrations"""
     service = RegistrationService()
     
     try:
-        registrations = service.get_registrations_by_event(event_id)
+        # Assuming HACKATHON_EVENT_ID = 1
+        registrations = service.get_registrations_by_event(1)
         return registrations
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
